@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pet Finder</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #101313;
+      --surface: #181d1c;
+      --surface-hover: #202725;
+      --border: #303a36;
+      --text: #edf3ef;
+      --muted: #93a39b;
+      --accent: #a8e66f;
+      --accent-ink: #1a2d0f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: radial-gradient(circle at 85% 0%, #263b2d 0, transparent 32rem), var(--canvas);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    main {
+      width: min(100% - 32px, 780px);
+      margin: 0 auto;
+      padding: 72px 0 48px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-family: "Trebuchet MS", sans-serif;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 7vw, 4.25rem);
+      font-weight: 400;
+      letter-spacing: 0;
+      line-height: 0.95;
+    }
+
+    .subtitle { color: var(--muted); margin: 18px 0 28px; }
+
+    .search-wrap { position: relative; }
+
+    input {
+      width: 100%;
+      min-height: 62px;
+      padding: 0 58px 0 20px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: var(--surface);
+      color: var(--text);
+      font: 1.1rem/1.3 "Trebuchet MS", sans-serif;
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    input::placeholder { color: #738179; }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168, 230, 111, 0.15); }
+
+    kbd {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transform: translateY(-50%);
+      padding: 4px 7px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      font: 0.72rem "Trebuchet MS", sans-serif;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 32px 0 14px;
+      color: var(--muted);
+      font: 0.82rem "Trebuchet MS", sans-serif;
+    }
+
+    #results { display: grid; gap: 22px; }
+    .group { border-top: 1px solid var(--border); padding-top: 14px; }
+    .group h2 { margin: 0 0 10px; color: var(--accent); font: 700 0.78rem "Trebuchet MS", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+    .pets { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 7px; }
+    .pet { padding: 11px 12px; border-radius: 5px; background: var(--surface); color: #dce6df; font: 0.94rem/1.3 "Trebuchet MS", sans-serif; }
+    .pet:hover { background: var(--surface-hover); }
+    mark { padding: 0; background: transparent; color: var(--accent); font-weight: 700; }
+    .empty { margin: 36px 0; color: var(--muted); font: 1rem "Trebuchet MS", sans-serif; text-align: center; }
+    .timer-panel { margin-top: 26px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 15px 0 16px; }
+    .timer-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+    .timer-heading h2 { margin: 0; color: var(--accent); font: 700 0.78rem "Trebuchet MS", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+    .timer-heading a { color: var(--muted); font: 0.76rem "Trebuchet MS", sans-serif; }
+    .timer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .event-timer { min-width: 0; padding: 11px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); }
+    .event-timer span { display: block; overflow: hidden; color: var(--muted); font: 0.7rem "Trebuchet MS", sans-serif; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .event-timer strong { display: block; margin-top: 4px; color: var(--text); font: 700 clamp(0.95rem, 2.2vw, 1.22rem) "Trebuchet MS", sans-serif; white-space: nowrap; }
+
+    @media (max-width: 520px) {
+      main { width: min(100% - 24px, 780px); padding-top: 46px; }
+      .pets { grid-template-columns: 1fr; }
+      .timer-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Pet reference</p>
+    <h1>Find a pet.</h1>
+    <p class="subtitle">Start typing from anywhere on this page to search the list.</p>
+    <div class="search-wrap">
+      <input id="search" type="search" autocomplete="off" placeholder="Search pets..." aria-label="Search pets" autofocus />
+      <kbd>Esc</kbd>
+    </div>
+    <section class="timer-panel" aria-label="Europe event timers">
+      <div class="timer-heading">
+        <h2>Europe timers</h2>
+        <a href="https://gamers4.life/aion-2/database/en/events/" target="_blank" rel="noopener noreferrer">Full schedule</a>
+      </div>
+      <div class="timer-grid">
+        <div class="event-timer"><span>Next rift</span><strong id="rift-timer">--</strong></div>
+        <div class="event-timer"><span>Next world boss</span><strong id="boss-timer">--</strong></div>
+        <div class="event-timer"><span>Next abyss</span><strong id="abyss-timer">--</strong></div>
+        <div class="event-timer"><span>Next event</span><strong id="event-timer">--</strong></div>
+      </div>
+    </section>
+    <div class="results-head"><span id="count" aria-live="polite"></span><span>Press Esc to clear</span></div>
+    <section id="results" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const petGroups = {
+      "Special Pets": ["Pagati", "Black Dragon", "Swift Lugi", "Wandering Merchant Lugi", "White Bunny", "Chonky Hamster"],
+      "Cogni Pets": ["Elite Dratona", "Varg Berserker", "Aultross's Doppelganger", "Mumu Warrior", "Mumu Worker", "Mumu Overseer", "Urugugu Brawler", "Sentinel K'nash", "Phantasmal Lakshmi", "Pretor Veil Administrator", "Biruta Herbalist", "Dratona", "Dratona Tinkerer", "Furious Feruk", "Addicted Shulak Cart Worker", "Predator Saraswati"],
+      "Fera Pets": ["Elite Keneire", "Kernon", "Aberrant Odyle Spider", "Elite Ursus", "Armadon", "Grave Rat", "Coradon", "Cadaver Insectoid", "Tog", "Young Tog"],
+      "Natura Pets": ["Black Smoke Murute", "Ultimate Element Spirits: Wind, Fire, Water, Earth", "Dionae", "Forest Dionae", "Ashen Dionae", "Red Spark Ignus", "Dried Up Forest Guardian", "Mutated Forest Guardian", "Ancient Spirit", "Spirit King's Bodyguard Warrior", "Elite Poisonous Spore Fungen", "Ashen Leaf Agrint", "Thin Leaf Agrint", "Dry Leaf Agrint", "Black Spirit"],
+      "Varian Pets": ["Drakana Kalgolem", "Krao Mutant", "Krao Test Subject", "Krao Seal Guardian", "Slime", "Drana", "Contaminated Slime", "Harcon", "Distorted Mutant", "Gatekeeper Pinopi", "Drana Mutant Brute", "Fated Mutant Brute", "Cadaver Cleaner", "Parasite Swarm", "Drana Contaminant", "Drana Mutant", "Faded Mutant", "Fated Floater", "Flame Stone Guardian Statue", "Duduka Worker", "Trebuchet Worker", "Faded Predator", "Mudthorn", "Poison Blood", "Elite Soulless Corpse Gnat (all variants)", "Congealed Drana", "Faded Drana"]
+    };
+
+    const search = document.querySelector("#search");
+    const results = document.querySelector("#results");
+    const count = document.querySelector("#count");
+    const europeFormatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Prague",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23"
+    });
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" })[character]);
+    }
+
+    function highlight(name, query) {
+      const queryWords = normalize(query).split(" ").filter(Boolean);
+      if (!queryWords.length) return escapeHtml(name);
+      return name.split(/([a-z0-9']+)/i).map(part => {
+        const lowerPart = part.toLowerCase();
+        const ranges = [];
+        for (const queryWord of queryWords) {
+          let start = lowerPart.indexOf(queryWord);
+          while (start !== -1) {
+            ranges.push([start, start + queryWord.length]);
+            start = lowerPart.indexOf(queryWord, start + queryWord.length);
+          }
+        }
+        if (!ranges.length) return escapeHtml(part);
+        ranges.sort((first, second) => first[0] - second[0]);
+        let output = "";
+        let cursor = 0;
+        for (const [start, end] of ranges) {
+          if (end <= cursor) continue;
+          output += escapeHtml(part.slice(cursor, start));
+          output += `<mark>${escapeHtml(part.slice(Math.max(cursor, start), end))}</mark>`;
+          cursor = end;
+        }
+        return output + escapeHtml(part.slice(cursor));
+      }).join("");
+    }
+
+    function normalize(value) {
+      return value.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function editDistance(source, target) {
+      const rows = Array.from({ length: source.length + 1 }, (_, index) => [index]);
+      for (let column = 0; column <= target.length; column += 1) rows[0][column] = column;
+      for (let row = 1; row <= source.length; row += 1) {
+        for (let column = 1; column <= target.length; column += 1) {
+          const substitution = rows[row - 1][column - 1] + (source[row - 1] === target[column - 1] ? 0 : 1);
+          const insertion = rows[row][column - 1] + 1;
+          const deletion = rows[row - 1][column] + 1;
+          rows[row][column] = Math.min(substitution, insertion, deletion);
+          if (row > 1 && column > 1 && source[row - 1] === target[column - 2] && source[row - 2] === target[column - 1]) {
+            rows[row][column] = Math.min(rows[row][column], rows[row - 2][column - 2] + 1);
+          }
+        }
+      }
+      return rows[source.length][target.length];
+    }
+
+    function matchScore(name, query) {
+      const normalizedName = normalize(name);
+      const normalizedQuery = normalize(query);
+      if (!normalizedQuery || normalizedName.includes(normalizedQuery)) return 0;
+
+      const nameWords = normalizedName.split(" ");
+      const queryWords = normalizedQuery.split(" ");
+      let score = 0;
+      for (const queryWord of queryWords) {
+        const bestDistance = Math.min(...nameWords.map(nameWord => nameWord.includes(queryWord) || queryWord.includes(nameWord) ? 0 : editDistance(queryWord, nameWord)));
+        const limit = queryWord.length <= 4 ? 1 : Math.floor(queryWord.length / 3);
+        if (bestDistance > limit) return null;
+        score += bestDistance;
+      }
+      return score || 1;
+    }
+
+    function render() {
+      const query = search.value.trim();
+      let found = 0;
+      const html = Object.entries(petGroups).map(([group, pets]) => {
+        const matchingPets = pets.map(pet => ({ pet, score: matchScore(pet, query) }))
+          .filter(match => match.score !== null)
+          .sort((first, second) => first.score - second.score)
+          .map(match => match.pet);
+        found += matchingPets.length;
+        if (!matchingPets.length) return "";
+        return `<div class="group"><h2>${group}</h2><div class="pets">${matchingPets.map(pet => `<div class="pet">${highlight(pet, query)}</div>`).join("")}</div></div>`;
+      }).join("");
+      count.textContent = `${found} ${found === 1 ? "pet" : "pets"}`;
+      results.innerHTML = html || '<p class="empty">No pets match that search.</p>';
+    }
+
+    function selectSearch() {
+      search.focus({ preventScroll: true });
+      search.select();
+    }
+
+    function europeNow() {
+      const parts = Object.fromEntries(europeFormatter.formatToParts().filter(part => part.type !== "literal").map(part => [part.type, Number(part.value)]));
+      return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    }
+
+    function nextRepeatingEvent(startHour, intervalHours, now) {
+      const start = Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), new Date(now).getUTCDate(), startHour);
+      const interval = intervalHours * 60 * 60 * 1000;
+      const elapsed = now - start;
+      const remainder = ((elapsed % interval) + interval) % interval;
+      return now + (remainder ? interval - remainder : interval);
+    }
+
+    function nextAbyss(now) {
+      const current = new Date(now);
+      for (let offset = 0; offset <= 7; offset += 1) {
+        const candidate = Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate() + offset, 21);
+        if ([1, 4, 6].includes(new Date(candidate).getUTCDay()) && candidate > now) return candidate;
+      }
+    }
+
+    function formatRemaining(timestamp, now) {
+      let seconds = Math.max(0, Math.ceil((timestamp - now) / 1000));
+      const days = Math.floor(seconds / 86400);
+      seconds %= 86400;
+      const hours = Math.floor(seconds / 3600);
+      seconds %= 3600;
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${days ? `${days}d ` : ""}${hours ? `${hours}h ` : ""}${minutes}m ${remainingSeconds}s`;
+    }
+
+    function updateTimers() {
+      const now = europeNow();
+      document.querySelector("#rift-timer").textContent = formatRemaining(nextRepeatingEvent(2, 3, now), now);
+      document.querySelector("#boss-timer").textContent = formatRemaining(nextRepeatingEvent(1, 3, now), now);
+      document.querySelector("#abyss-timer").textContent = formatRemaining(nextAbyss(now), now);
+      document.querySelector("#event-timer").textContent = formatRemaining(nextRepeatingEvent(0, 1, now), now);
+    }
+
+    search.addEventListener("input", render);
+    search.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        search.value = "";
+        render();
+        search.blur();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      const isTyping = event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+      if (isTyping && document.activeElement !== search) {
+        search.focus();
+        search.value += event.key;
+        render();
+        event.preventDefault();
+      }
+    });
+
+    window.addEventListener("focus", selectSearch);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) selectSearch();
+    });
+    document.addEventListener("pointerdown", event => {
+      if (event.target !== search) selectSearch();
+    });
+
+    render();
+    updateTimers();
+    setInterval(updateTimers, 1000);
+  </script>
+</body>
+</html>
