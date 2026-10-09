@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.5",
   "updated": "2026-10-09",
-  "change": "Kept the version visible while scrolling."
+  "change": "Connected the app to the shared Google Sheet."
 }
