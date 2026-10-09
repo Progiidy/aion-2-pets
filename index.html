@@ -108,6 +108,7 @@
     .event-timer { min-width: 0; padding: 11px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); }
     .event-timer span { display: block; overflow: hidden; color: var(--muted); font: 0.7rem "Trebuchet MS", sans-serif; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
     .event-timer strong { display: block; margin-top: 4px; color: var(--text); font: 700 clamp(0.95rem, 2.2vw, 1.22rem) "Trebuchet MS", sans-serif; white-space: nowrap; }
+    .version { position: fixed; right: max(12px, calc((100vw - 780px) / 2)); bottom: 12px; z-index: 1; margin: 0; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--muted); font: 0.72rem "Trebuchet MS", sans-serif; }
 
     @media (max-width: 520px) {
       main { width: min(100% - 24px, 780px); padding-top: 46px; }
@@ -139,6 +140,7 @@
     </section>
     <div class="results-head"><span id="count" aria-live="polite"></span><span>Press Esc to clear</span></div>
     <section id="results" aria-live="polite"></section>
+    <p id="version" class="version"></p>
   </main>
 
   <script>
@@ -147,6 +149,7 @@
     const search = document.querySelector("#search");
     const results = document.querySelector("#results");
     const count = document.querySelector("#count");
+    const version = document.querySelector("#version");
     const europeFormatter = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Europe/Prague",
       year: "numeric",
@@ -334,6 +337,15 @@
       .catch(() => {
         count.textContent = "Pet data could not be loaded.";
         results.innerHTML = '<p class="empty">Unable to load pets.</p>';
+      });
+
+    fetch("version.json")
+      .then(response => {
+        if (!response.ok) throw new Error("Unable to load version data.");
+        return response.json();
+      })
+      .then(data => {
+        version.textContent = `Version ${data.version} | Updated ${data.updated}`;
       });
     updateTimers();
     setInterval(updateTimers, 1000);
